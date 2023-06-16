@@ -1,88 +1,166 @@
-import React from 'react'
+import React from 'react';
+import axios from 'axios';
 
-// Suggested initial states
-const initialMessage = ''
-const initialEmail = ''
-const initialSteps = 0
-const initialIndex = 4 // the index the "B" is at
-
-const initialState = {
-  message: initialMessage,
-  email: initialEmail,
-  index: initialIndex,
-  steps: initialSteps,
-}
+const initialMessage = '';
+const initialEmail = '';
+const initialSteps = 0;
+const initialIndex = 4;
 
 export default class AppClass extends React.Component {
-  // THE FOLLOWING HELPERS ARE JUST RECOMMENDATIONS.
-  // You can delete them and build your own logic from scratch.
+  state = {
+    message: initialMessage,
+    email: initialEmail,
+    index: initialIndex,
+    steps: initialSteps,
+  };
 
   getXY = () => {
-    // It it not necessary to have a state to track the coordinates.
-    // It's enough to know what index the "B" is at, to be able to calculate them.
-  }
+    const { index } = this.state;
+    const x = (index % 3) + 1;
+    const y = Math.floor(index / 3) + 1;
+    return { x, y };
+  };
 
   getXYMessage = () => {
-    // It it not necessary to have a state to track the "Coordinates (2, 2)" message for the user.
-    // You can use the `getXY` helper above to obtain the coordinates, and then `getXYMessage`
-    // returns the fully constructed string.
-  }
+    const { x, y } = this.getXY();
+    return `Coordinates (${x}, ${y})`;
+  };
 
   reset = () => {
-    // Use this helper to reset all states to their initial values.
-  }
+    this.setState({
+      message: initialMessage,
+      email: initialEmail,
+      index: initialIndex,
+      steps: initialSteps,
+    });
+  };
 
   getNextIndex = (direction) => {
-    // This helper takes a direction ("left", "up", etc) and calculates what the next index
-    // of the "B" would be. If the move is impossible because we are at the edge of the grid,
-    // this helper should return the current index unchanged.
-  }
+    const { index } = this.state;
+    let nextIndex = index;
+
+    switch (direction) {
+      case 'left':
+        if (index % 3 !== 0) {
+          nextIndex = index - 1;
+        }
+        break;
+      case 'up':
+        if (index >= 3) {
+          nextIndex = index - 3;
+        }
+        break;
+      case 'right':
+        if (index % 3 !== 2) {
+          nextIndex = index + 1;
+        }
+        break;
+      case 'down':
+        if (index <= 5) {
+          nextIndex = index + 3;
+        }
+        break;
+      default:
+        break;
+    }
+
+    return nextIndex;
+  };
 
   move = (evt) => {
-    // This event handler can use the helper above to obtain a new index for the "B",
-    // and change any states accordingly.
-  }
+    const direction = evt.target.id;
+    const nextIndex = this.getNextIndex(direction);
+    const { steps } = this.state;
+
+    if (nextIndex !== this.state.index) {
+      this.setState({
+        index: nextIndex,
+        steps: steps + 1,
+        message: '',
+      });
+    } else {
+      this.setState({
+        message: `You can't go ${direction}`,
+      });
+    }
+  };
 
   onChange = (evt) => {
-    // You will need this to update the value of the input.
-  }
+    this.setState({ email: evt.target.value });
+  };
 
-  onSubmit = (evt) => {
-    // Use a POST request to send a payload to the server.
-  }
+  onSubmit = async (evt) => {
+    evt.preventDefault();
+    const { index, email, steps } = this.state;
+
+    try {
+      const { x, y } = this.getXY();
+      await axios.post('http://localhost:9000/api/result', {
+        x,
+        y,
+        steps,
+        email,
+      });
+      this.setState({ message: 'Submitted successfully!' });
+    } catch (error) {
+      if (error.response) {
+        this.setState({ message: error.response.data.message });
+      } else {
+        this.setState({ message: 'An error occurred. Please try again later.' });
+      }
+    }
+  };
 
   render() {
-    const { className } = this.props
+    const { message, email } = this.state;
+
     return (
-      <div id="wrapper" className={className}>
+      <div id="wrapper" className={this.props.className}>
         <div className="info">
-          <h3 id="coordinates">Coordinates (2, 2)</h3>
-          <h3 id="steps">You moved 0 times</h3>
+          <h3 id="coordinates">{this.getXYMessage()}</h3>
+          <h3 id="steps">You moved {this.state.steps} times</h3>
         </div>
         <div id="grid">
-          {
-            [0, 1, 2, 3, 4, 5, 6, 7, 8].map(idx => (
-              <div key={idx} className={`square${idx === 4 ? ' active' : ''}`}>
-                {idx === 4 ? 'B' : null}
-              </div>
-            ))
-          }
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
+            <div
+              key={idx}
+              className={`square${idx === this.state.index ? ' active' : ''}`}
+            >
+              {idx === this.state.index ? 'B' : null}
+            </div>
+          ))}
         </div>
         <div className="info">
-          <h3 id="message"></h3>
+          <h3 id="message">{message}</h3>
         </div>
         <div id="keypad">
-          <button id="left">LEFT</button>
-          <button id="up">UP</button>
-          <button id="right">RIGHT</button>
-          <button id="down">DOWN</button>
-          <button id="reset">reset</button>
+          <button id="left" onClick={this.move}>
+            LEFT
+          </button>
+          <button id="up" onClick={this.move}>
+            UP
+          </button>
+          <button id="right" onClick={this.move}>
+            RIGHT
+          </button>
+          <button id="down" onClick={this.move}>
+            DOWN
+          </button>
+          <button id="reset" onClick={this.reset}>
+            reset
+          </button>
         </div>
-        <form>
-          <input id="email" type="email" placeholder="type email"></input>
+        <form onSubmit={this.onSubmit}>
+          <input
+            id="email"
+            type="email"
+            placeholder="type email"
+            value={email}
+            onChange={this.onChange}
+          ></input>
           <input id="submit" type="submit"></input>
         </form>
       </div>
-    )
+    );
   }
 }
