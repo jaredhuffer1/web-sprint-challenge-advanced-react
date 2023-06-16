@@ -64,7 +64,7 @@ const AppFunctional = (props) => {
   const move = (evt) => {
     const direction = evt.target.id;
     const nextIndex = getNextIndex(direction);
-  
+
     if (nextIndex !== index) {
       setIndex(nextIndex);
       setSteps(steps + 1);
@@ -73,7 +73,6 @@ const AppFunctional = (props) => {
       setMessage(`You can't go ${direction}`);
     }
   };
-  
 
   const onChange = (evt) => {
     setEmail(evt.target.value);
@@ -83,13 +82,18 @@ const AppFunctional = (props) => {
     evt.preventDefault();
     try {
       const { x, y } = getXY();
-      await axios.post('http://localhost:9000/api/result', {
+      const response = await axios.post('http://localhost:9000/api/result', {
         x,
         y,
         steps,
         email,
       });
-      setMessage('Submitted successfully!');
+     
+      if(response.data && response.data.message) {
+        setMessage(response.data.message);
+      } else {
+        setMessage('Submitted successfully!');
+      }
     } catch (error) {
       if (error.response) {
         setMessage(error.response.data.message);
@@ -98,6 +102,7 @@ const AppFunctional = (props) => {
       }
     }
   };
+
 
   return (
     <div id="wrapper" className={props.className}>

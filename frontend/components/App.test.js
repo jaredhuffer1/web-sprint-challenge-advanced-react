@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import AppFunctional from './AppFunctional';
 import AppClass from './AppClass';
 
@@ -46,23 +47,17 @@ describe('AppFunctional', () => {
     const downButton = screen.getByText(/down/i);
     const emailInput = screen.getByPlaceholderText(/type email/i);
     const submitButton = screen.getByText(/submit/i);
-  
+
     fireEvent.click(downButton);
     fireEvent.click(downButton);
     fireEvent.change(emailInput, { target: { value: 'lady@gaga.com' } });
     fireEvent.click(submitButton);
-  
-    const successMessage = await screen.findByText(/Submitted successfully!/i);
-    expect(successMessage).toBeInTheDocument();
+
+    const successMessage = await screen.findByText(/ladywin#\d/i);
+expect(successMessage).toBeInTheDocument();
+
   });
-  
-  
-  
-  
-  
 });
-
-
 
 describe('AppClass', () => {
   test('renders correct heading text', () => {
@@ -117,6 +112,7 @@ describe('AppClass', () => {
     expect(successMessage).toBeInTheDocument();
   });
 });
-  
-  
 
+test('sanity', () => {
+  expect(true).toBe(false);
+});

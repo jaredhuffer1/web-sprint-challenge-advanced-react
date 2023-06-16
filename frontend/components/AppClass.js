@@ -85,23 +85,26 @@ export default class AppClass extends React.Component {
     }
   };
 
-  onChange = (evt) => {
-    this.setState({ email: evt.target.value });
-  };
-
   onSubmit = async (evt) => {
     evt.preventDefault();
     const { index, email, steps } = this.state;
 
     try {
       const { x, y } = this.getXY();
-      await axios.post('http://localhost:9000/api/result', {
+      const response = await axios.post('http://localhost:9000/api/result', {
         x,
         y,
         steps,
         email,
       });
-      this.setState({ message: 'Submitted successfully!' });
+
+     
+      if(response.data && response.data.message) {
+        this.setState({ message: response.data.message, email: initialEmail }); // <-- clear email here
+      } else {
+        this.setState({ message: 'Submitted successfully!', email: initialEmail }); // <-- and here
+      }
+
     } catch (error) {
       if (error.response) {
         this.setState({ message: error.response.data.message });
@@ -109,6 +112,12 @@ export default class AppClass extends React.Component {
         this.setState({ message: 'An error occurred. Please try again later.' });
       }
     }
+};
+
+
+
+  onChange = (evt) => {
+    this.setState({ email: evt.target.value });
   };
 
   render() {
